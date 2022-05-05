@@ -60,7 +60,7 @@ const registerAuthor = async function (req, res) {
 
         const authorData = { fname, lname, title, email, password }
         const newAuthor = await authorModel.create(authorData);
-        res.status(200).send({ status: true, message: "author created successfully", data: newAuthor });
+        res.status(201).send({ status: true, message: "author created successfully", data: newAuthor });
 
     }
     catch (error) {
@@ -94,10 +94,10 @@ const loginAuthor = async function (req, res) {
             return
         }
 
-        if (!isValid(password)) {
-            res.status(400).send({ status: false, message: "password is required" })
-            return
-        }
+        // if (!isValid(password)) {
+        //     res.status(400).send({ status: false, message: "password is required" })
+        //     return
+        // }
 
         const author = await authorModel.findOne({ email, password });
         if (!author) {

@@ -252,7 +252,7 @@ const deleteBlodbyId = async function (req, res) {
         }
 
         await blogModel.findOneAndUpdate({ _id: blogId }, { $set: { isDeleted: true, deletedAt: new Date() } })
-        res.status(200).send({ status: false, message: "Blog updated successfully" })
+        res.status(200).send({ status: true, message: "Blog updated successfully" })
     }
     catch (error) {
         res.status(500).send({ status: false, message: error.message })
