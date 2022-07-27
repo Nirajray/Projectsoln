@@ -159,7 +159,7 @@ const updateBlog = async function (req, res) {
         }
 
         if (blog.authorId.toString() !== authorIdFromToken) {
-            res.status(401).send({ status: false, message: "Unauthorized access owner info does not match" })
+            res.status(403).send({ status: false, message: "Unauthorized access owner info does not match" })
             return
         }
 
@@ -247,7 +247,7 @@ const deleteBlodbyId = async function (req, res) {
         }
 
         if (blog.authorId.toString() !== authorIdFromToken) {
-            res.status(401).send({ status: false, message: "Unauthorized access owner info does not match" })
+            res.status(403).send({ status: false, message: "Unauthorized access owner info does not match" })
             return
         }
 

@@ -4,14 +4,14 @@ const authorAuth =  function(req, res, next){
 try{
     const token = req.header('x-api-key')
     if(!token){
-        res.status(403).send({status:false, message:'Missing authentication token request'})
+        res.status(401).send({status:false, message:'Missing authentication token request'})
         return;
     }
 
     const decoded= jwt.verify(token, 'somesecureprivatekey')
 
     if(!decoded){
-        res.status(403).send({status:false, message:'Invalid token'})
+        res.status(400).send({status:false, message:'Invalid token'})
         return;
     }
 req.authorId = decoded.authorId

@@ -74,7 +74,7 @@ const loginAuthor = async function (req, res) {
     try {
         const requestBody = req.body;
         if (!isValidRequestBody(requestBody)) {
-            res.status(500).send({ status: false, message: "Invalid request parameters please provide login details" })
+            res.status(400).send({ status: false, message: "Invalid request parameters please provide login details" })
             return
         }
 
@@ -93,11 +93,6 @@ const loginAuthor = async function (req, res) {
             res.status(400).send({ status: false, message: "password is required" })
             return
         }
-
-        // if (!isValid(password)) {
-        //     res.status(400).send({ status: false, message: "password is required" })
-        //     return
-        // }
 
         const author = await authorModel.findOne({ email, password });
         if (!author) {
