@@ -1,5 +1,4 @@
-const { request } = require("express")
-const { default: mongoose} = require("mongoose")
+const  mongoose = require("mongoose")
 const authorModel = require("../Model/authorModel")
 const blogModel = require("../Model/blogModel")
 
@@ -40,6 +39,12 @@ const createBlog = async function (req, res) {
             res.status(400).send({ status: false, message: "AuthorId is required" })
             return
         }
+        const author = await authorModel.findById(authorId);
+
+        if (!author) {
+            res.status(404).send({ status: false, message: "Author does not exist" })
+        }
+
         if (!isValidObjectId(authorId)) {
             res.status(400).send({ status: false, message: "${authorId} is not a valid authorId" })
             return
@@ -47,12 +52,6 @@ const createBlog = async function (req, res) {
         if (!isValid(category)) {
             res.status(400).send({ status: false, message: "Blog category is required" })
             return
-        }
-
-        const author = await authorModel.findById(authorId);
-
-        if (!author) {
-            res.status(400).send({ status: false, message: "Author does not exist" })
         }
 
         const blogData ={
@@ -66,22 +65,17 @@ const createBlog = async function (req, res) {
 
         if (tags) {
             if (Array.isArray(tags)) {
-                blogData['tags'] = [...tags]
+                blogData['tags'] = tags
             }
-            if (Object.prototype.toString.call(tags) === "[object String]") {
-                blogData['tags'] = [tags]
-            }
+           
 
         }
 
         if (subcategory) {
             if (Array.isArray(subcategory)) {
-                blogData['subcategory'] = [...subcategory]
+                blogData['subcategory'] = subcategory
             }
 
-            if (Object.prototype.toString.call(subcategory) === "[object String]") {
-                blogData['subcategory'] = [subcategory]
-            }
         }
 
         const newBlog = await blogModel.create(blogData)
@@ -109,12 +103,12 @@ const listBlog = async function (req, res) {
                 filterQuery['category'] = category.trim()
             }
             if (isValid(tags)) {
-                const tagsArr = tags.trim().split(',').map((tag) => tag.trim());
+                const tagsArr = tags.map((tag) => tag.trim());
                 filterQuery['tags'] = { $all: tagsArr }
             }
 
             if (isValid(subcategory)) {
-                const subcatArr = subcategory.trim().split(',').map((subcat) => subcat.trim());
+                const subcatArr = subcategory.map((subcat) => subcat.trim());
                 filterQuery['subcategory'] = { $all: subcatArr }
             }
         }
@@ -164,7 +158,7 @@ const updateBlog = async function (req, res) {
         }
 
         if (!isValidRequestBody(requestBody)) {
-            res.status(200).send({ status: true, message: "No aparameters passed blog unmodified", data: blog })
+            res.status(200).send({ status: true, message: "No parameters passed blog unmodified", data: blog })
         }
 
         const { title, body, tags, category, subcategory, isPublished } = requestBody
@@ -194,25 +188,17 @@ const updateBlog = async function (req, res) {
         if (tags) {
             if (!Object.prototype.hasOwnProperty.call(updateBlogData, '$addToSet')) updateBlogData['$addToSet'] = {}
             if (Array.isArray(tags)) {
-                updateBlogData['$addToSet']['tags'] = { $each: [...tags] }
+                updateBlogData['$addToSet']['tags'] = tags
             }
 
-            if (typeof tags === "string") {
-
-                updateBlogData['$addToSet']['tags'] = ['tags']
-            }
         }
 
         if (subcategory) {
             if (!Object.prototype.hasOwnProperty.call(updateBlogData, '$addToSet')) updateBlogData['$addToSet'] = {}
             if (Array.isArray(subcategory)) {
-                updateBlogData['$addToSet']['tags'] = { $each: [...subcategory] }
+                updateBlogData['$addToSet']['tags'] = subcategory
             }
 
-            if (typeof subcategory === "string") {
-
-                updateBlogData['$addToSet']['subcategory'] = ['subcategory']
-            }
         }
 
         const updateBlog = await blogModel.findOneAndUpdate({ _id: blogId }, updateBlogData, { new: true })
@@ -226,8 +212,7 @@ const updateBlog = async function (req, res) {
 
 const deleteBlodbyId = async function (req, res) {
     try {
-        const params = req.params
-        const blogId = params.blogId
+        const blogId = req.params.blogId
        const authorIdFromToken = req.authorId
 
         if (!isValidObjectId(blogId)) {
@@ -288,12 +273,12 @@ const deleteBlodByParams = async function (req, res) {
             filterQuery['category'] = category.trim()
         }
         if (isValid(tags)) {
-            const tagsArr = tags.trim().split(',').map(tag => tag.trim());
+            const tagsArr = tags.map(tag => tag.trim());
             filterQuery['tags'] = {$all: tagsArr }
         }
 
         if (isValid(subcategory)) {
-            const subcatArr = subcategory.trim().split(',').map(subcat => subcat.trim());
+            const subcatArr = subcategory.map(subcat => subcat.trim());
             filterQuery['subcategory'] = { $all: subcatArr }
         }
 
@@ -306,11 +291,19 @@ const deleteBlodByParams = async function (req, res) {
             res.status(404).send({ status: false, message: "No matching blogs found" })
             return
         }
+        const authorizedId = blogs.map(blog => {
+            if (blog.authorId.toString() !== authorIdFromToken) return true
+        })
 
+        if(authorizedId){
+            res.status(403).send({ status: false, message: "Unauthorized access owner info does not match" })
+            return
+        }
+        
         const idsBlogsToDelete = blogs.map(blog => {
             if (blog.authorId.toString() === authorIdFromToken) return blog._id
         })
-
+     
         if (idsBlogsToDelete.length === 0) {
             res.status(404).send({ status: false, message: "No blogs found" })
             return
